@@ -1,0 +1,58 @@
+name: build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Typecheck, lint and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The npm cache is restored by hand rather than through setup-node's `cache: npm`,
+      # which hard-fails when package-lock.json is not committed yet.
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify extension manifest was copied into dist
+        run: test -f dist/manifest.json && test -f dist/index.html
+
+      - name: Upload extension bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: glasstab-extension
+          path: dist
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,409 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   GlassTab — Glass Design System
+   --------------------------------------------------------------------------
+   The single source of truth for every translucent surface in the app.
+
+   Rules:
+   - `backdrop-filter` is declared *only* in this file (plan.md Rule 4).
+   - Components pick a level class (glass-1 … glass-modal) and never re-declare
+     background, border, shadow or blur themselves.
+   - Three `*-setting` variables are written onto <html> by settingsStore; every
+     level derives its own values from them, so the Appearance panel changes the
+     whole app at once.
+   ========================================================================== */
+
+@layer base {
+  :root {
+    /* ---------- typography ---------- */
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text",
+      "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display",
+      "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+      monospace;
+
+    /* ---------- base palette (HSL triplets, shadcn compatible) ---------- */
+    --background: 0 0% 100%;
+    --foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 42%;
+    --border: 240 6% 88%;
+    --input: 240 6% 88%;
+    --ring: 211 100% 52%;
+    --primary: 240 6% 12%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* accent — overwritten from settings.accentColor */
+    --accent: 211 100% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    /* ---------- radii ---------- */
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --glass-radius-sm: 14px;
+    --glass-radius-md: 20px;
+    --glass-radius-lg: 28px;
+
+    /* ---------- glass: user settings (written by the store) ---------- */
+    --glass-blur-setting: 26px;
+    --glass-opacity-setting: 0.5;
+    --glass-border-setting: 0.5;
+    --glass-highlight-setting: 0.5;
+    --glass-shadow-setting: 0.18;
+
+    /* ---------- glass: theme derivation ---------- */
+    --glass-tint: 255 255 255;
+    --glass-rim: 255 255 255;
+    --glass-shadow-color: 15 23 42;
+    --glass-saturate: 175%;
+    --glass-blur-base: var(--glass-blur-setting);
+    --glass-opacity-base: var(--glass-opacity-setting);
+    --glass-border-base: var(--glass-border-setting);
+    --glass-highlight-base: var(--glass-highlight-setting);
+    --glass-shadow-base: var(--glass-shadow-setting);
+
+    /* ---------- glass: effective values, overridden per level class ---------- */
+    --glass-opacity: var(--glass-opacity-base);
+    --glass-blur: blur(var(--glass-blur-base)) saturate(var(--glass-saturate));
+    --glass-border-alpha: var(--glass-border-base);
+    --glass-highlight-alpha: var(--glass-highlight-base);
+    --glass-shadow-alpha: var(--glass-shadow-base);
+    --glass-radius: var(--glass-radius-md);
+
+    /* ---------- glass: the tokens from plan.md §10 ---------- */
+    --glass-bg: rgb(var(--glass-tint) / var(--glass-opacity));
+    --glass-border: rgb(var(--glass-rim) / var(--glass-border-alpha));
+    --glass-border-strong: rgb(var(--glass-rim) / min(1, calc(var(--glass-border-alpha) * 1.9)));
+    --glass-highlight: inset 0 1px 0 0 rgb(var(--glass-rim) / var(--glass-highlight-alpha));
+    --glass-shadow: 0 12px 32px -14px rgb(var(--glass-shadow-color) / var(--glass-shadow-alpha)),
+      0 2px 10px -6px rgb(var(--glass-shadow-color) / calc(var(--glass-shadow-alpha) * 0.75));
+
+    /* ---------- wallpaper ---------- */
+    --wallpaper-blur: 0px;
+    --wallpaper-brightness: 1;
+    --wallpaper-saturation: 1;
+    --overlay-setting: 0.06;
+    --overlay-color: 255 255 255;
+    --overlay-alpha: var(--overlay-setting);
+    --grain-opacity: 0.18;
+    --scrollbar-thumb: 15 23 42;
+
+    /* ---------- motion ---------- */
+    --motion-fast: 160ms;
+    --motion-base: 260ms;
+    --motion-slow: 420ms;
+    --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .dark {
+    --background: 240 8% 6%;
+    --foreground: 0 0% 96%;
+    --muted: 240 6% 16%;
+    --muted-foreground: 240 5% 65%;
+    --border: 240 5% 22%;
+    --input: 240 5% 24%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 240 8% 8%;
+    --secondary: 240 6% 18%;
+    --secondary-foreground: 0 0% 96%;
+
+    --glass-tint: 22 22 30;
+    --glass-shadow-color: 0 0 0;
+    --glass-saturate: 150%;
+    /* dark glass reads heavier at the same opacity, so the baselines are scaled down */
+    --glass-opacity-base: calc(var(--glass-opacity-setting) * 0.88);
+    --glass-border-base: calc(var(--glass-border-setting) * 0.8);
+    --glass-highlight-base: calc(var(--glass-highlight-setting) * 0.32);
+    --glass-shadow-base: calc(var(--glass-shadow-setting) * 2.6);
+
+    --overlay-color: 4 5 10;
+    --overlay-alpha: calc(var(--overlay-setting) * 2.2);
+    --grain-opacity: 0.3;
+    --scrollbar-thumb: 255 255 255;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow: hidden;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent) / 0.3);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--scrollbar-thumb) / 0.24) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--scrollbar-thumb) / 0.22);
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--scrollbar-thumb) / 0.36);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  /* user setting: animations off */
+  [data-motion="off"] *,
+  [data-motion="off"] ::before,
+  [data-motion="off"] ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@layer components {
+  /* ------------------------------------------------------------------
+     Glass surfaces
+     ------------------------------------------------------------------ */
+
+  /* Blurred surface. */
+  .glass {
+    position: relative;
+    background-color: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-top-color: var(--glass-border-strong);
+    box-shadow: var(--glass-highlight), var(--glass-shadow);
+    border-radius: var(--glass-radius);
+    color: hsl(var(--foreground));
+    /* transform is intentionally absent: Framer Motion owns it on animated surfaces,
+       and a CSS transition on the same property would fight the animation. */
+    transition:
+      background-color var(--motion-base) var(--ease-out-soft),
+      border-color var(--motion-base) var(--ease-out-soft),
+      box-shadow var(--motion-base) var(--ease-out-soft);
+  }
+
+  /* Unblurred surface for anything nested inside another glass surface: a second
+     backdrop-filter would stack GPU cost and muddy the fill for no visual gain. */
+  .glass-solid {
+    position: relative;
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-top-color: var(--glass-border-strong);
+    box-shadow: var(--glass-highlight);
+    border-radius: var(--glass-radius);
+    color: hsl(var(--foreground));
+    transition:
+      background-color var(--motion-base) var(--ease-out-soft),
+      border-color var(--motion-base) var(--ease-out-soft),
+      box-shadow var(--motion-base) var(--ease-out-soft);
+  }
+
+  /* Glass 1 — lightest: chips, inline controls sitting on a glass surface. */
+  .glass-1 {
+    --glass-opacity: calc(var(--glass-opacity-base) * 0.62);
+    --glass-blur: blur(calc(var(--glass-blur-base) * 0.5)) saturate(var(--glass-saturate));
+    --glass-shadow-alpha: calc(var(--glass-shadow-base) * 0.5);
+  }
+
+  /* Glass 2 — the default card surface. */
+  .glass-2 {
+    --glass-opacity: var(--glass-opacity-base);
+    --glass-blur: blur(var(--glass-blur-base)) saturate(var(--glass-saturate));
+    --glass-shadow-alpha: var(--glass-shadow-base);
+  }
+
+  /* Glass 3 — raised: selected segments, headers, hovered cards. */
+  .glass-3 {
+    --glass-opacity: min(1, calc(var(--glass-opacity-base) * 1.24));
+    --glass-blur: blur(calc(var(--glass-blur-base) * 1.2)) saturate(var(--glass-saturate));
+    --glass-shadow-alpha: calc(var(--glass-shadow-base) * 1.6);
+  }
+
+  /* Glass Floating — navigation bar, popovers, menus. */
+  .glass-floating {
+    --glass-opacity: min(1, calc(var(--glass-opacity-base) * 1.12));
+    --glass-blur: blur(calc(var(--glass-blur-base) * 1.45)) saturate(calc(var(--glass-saturate) + 20%));
+    --glass-shadow-alpha: calc(var(--glass-shadow-base) * 2.2);
+    --glass-radius: var(--glass-radius-lg);
+  }
+
+  /* Glass Modal — dialogs: the most opaque level so text stays readable. */
+  .glass-modal {
+    --glass-opacity: min(1, calc(var(--glass-opacity-base) * 1.6));
+    --glass-blur: blur(calc(var(--glass-blur-base) * 1.8)) saturate(calc(var(--glass-saturate) + 10%));
+    --glass-shadow-alpha: calc(var(--glass-shadow-base) * 2.8);
+    --glass-radius: var(--glass-radius-lg);
+  }
+
+  /* Glass Interactive — opt-in lift/press feedback (plan.md §14). Declared with longhands
+     so it adds transform to the surface's transitions instead of replacing them. */
+  .glass-interactive {
+    transition-property: transform, background-color, border-color, box-shadow;
+    transition-duration: var(--motion-base);
+    transition-timing-function: var(--ease-out-soft);
+  }
+
+  .glass-interactive:hover {
+    transform: translateY(-2px) scale(1.01);
+  }
+
+  .glass-interactive:active {
+    transform: translateY(0) scale(0.995);
+  }
+
+  /* Dimmed + blurred backdrop behind modals and sheets. */
+  .glass-scrim {
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+  }
+
+  .glass-pill {
+    border-radius: 999px;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ------------------------------------------------------------------
+     Wallpaper stack (plan.md §20): wallpaper → overlay → glass UI
+     ------------------------------------------------------------------ */
+
+  .wallpaper {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    transform: scale(1.06);
+    background-color: hsl(var(--background));
+    background-repeat: no-repeat;
+    background-size: cover;
+    filter: blur(var(--wallpaper-blur)) brightness(var(--wallpaper-brightness))
+      saturate(var(--wallpaper-saturation));
+    transition: filter var(--motion-slow) var(--ease-out-soft);
+  }
+
+  /* aurora (default) */
+  .wallpaper {
+    background-image:
+      radial-gradient(120% 90% at 12% 6%, rgb(255 214 165 / 0.8) 0%, rgb(255 214 165 / 0) 55%),
+      radial-gradient(110% 85% at 88% 10%, rgb(178 208 255 / 0.9) 0%, rgb(178 208 255 / 0) 58%),
+      radial-gradient(120% 100% at 76% 94%, rgb(226 200 255 / 0.75) 0%, rgb(226 200 255 / 0) 60%),
+      radial-gradient(90% 75% at 20% 90%, rgb(186 240 226 / 0.7) 0%, rgb(186 240 226 / 0) 62%),
+      linear-gradient(160deg, #f8f9fd 0%, #eef1f8 45%, #e8ecf6 100%);
+  }
+
+  .dark .wallpaper {
+    background-image:
+      radial-gradient(115% 85% at 10% 4%, rgb(66 80 168 / 0.8) 0%, rgb(66 80 168 / 0) 58%),
+      radial-gradient(105% 80% at 92% 8%, rgb(124 62 162 / 0.72) 0%, rgb(124 62 162 / 0) 60%),
+      radial-gradient(125% 95% at 80% 96%, rgb(18 112 134 / 0.68) 0%, rgb(18 112 134 / 0) 62%),
+      radial-gradient(85% 70% at 24% 94%, rgb(38 38 92 / 0.85) 0%, rgb(38 38 92 / 0) 65%),
+      linear-gradient(170deg, #07070d 0%, #0b0c16 50%, #08090f 100%);
+  }
+
+  /* sunset */
+  [data-wallpaper="sunset"] .wallpaper {
+    background-image:
+      radial-gradient(110% 85% at 14% 10%, rgb(255 183 148 / 0.85) 0%, rgb(255 183 148 / 0) 56%),
+      radial-gradient(120% 90% at 84% 16%, rgb(255 143 171 / 0.7) 0%, rgb(255 143 171 / 0) 58%),
+      radial-gradient(120% 100% at 70% 96%, rgb(178 152 255 / 0.7) 0%, rgb(178 152 255 / 0) 62%),
+      linear-gradient(165deg, #fff6f0 0%, #ffe9e2 46%, #f7e6f2 100%);
+  }
+
+  .dark[data-wallpaper="sunset"] .wallpaper {
+    background-image:
+      radial-gradient(110% 85% at 12% 8%, rgb(150 52 62 / 0.8) 0%, rgb(150 52 62 / 0) 58%),
+      radial-gradient(120% 90% at 86% 14%, rgb(120 44 116 / 0.75) 0%, rgb(120 44 116 / 0) 60%),
+      radial-gradient(125% 100% at 74% 96%, rgb(58 34 96 / 0.85) 0%, rgb(58 34 96 / 0) 62%),
+      linear-gradient(168deg, #150a0c 0%, #1b0d14 52%, #120a14 100%);
+  }
+
+  /* graphite */
+  [data-wallpaper="graphite"] .wallpaper {
+    background-image:
+      radial-gradient(120% 90% at 20% 4%, rgb(214 219 232 / 0.9) 0%, rgb(214 219 232 / 0) 58%),
+      radial-gradient(110% 85% at 84% 12%, rgb(232 236 244 / 0.9) 0%, rgb(232 236 244 / 0) 58%),
+      linear-gradient(170deg, #f4f5f8 0%, #e7e9ef 50%, #dcdfe7 100%);
+  }
+
+  .dark[data-wallpaper="graphite"] .wallpaper {
+    background-image:
+      radial-gradient(120% 90% at 18% 6%, rgb(58 62 76 / 0.9) 0%, rgb(58 62 76 / 0) 60%),
+      radial-gradient(110% 85% at 86% 14%, rgb(46 50 62 / 0.9) 0%, rgb(46 50 62 / 0) 58%),
+      linear-gradient(172deg, #0c0d11 0%, #131419 52%, #0a0b0e 100%);
+  }
+
+  .wallpaper-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-color: rgb(var(--overlay-color) / var(--overlay-alpha));
+    background-image: linear-gradient(
+      180deg,
+      rgb(var(--overlay-color) / calc(var(--overlay-alpha) * 2.4)) 0%,
+      rgb(var(--overlay-color) / 0) 16%,
+      rgb(var(--overlay-color) / 0) 74%,
+      rgb(var(--overlay-color) / calc(var(--overlay-alpha) * 1.9)) 100%
+    );
+    transition: background-color var(--motion-slow) var(--ease-out-soft);
+  }
+
+  /* A touch of grain keeps large blurred surfaces from looking like flat plastic. */
+  .wallpaper-grain {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: soft-light;
+    background-size: 160px 160px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='0.55'/%3E%3C/svg%3E");
+  }
+}

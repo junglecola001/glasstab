@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GlassTab</title>
+    <meta name="description" content="A liquid-glass personal workspace for your new tab." />
+    <!--
+      Critical shell styles + theme resolution run before first paint so the new tab
+      never flashes white (plan.md §31: 打开即显示).
+    -->
+    <style>
+      html {
+        background-color: #eef1f8;
+      }
+      html.dark {
+        background-color: #08090f;
+      }
+      html,
+      body,
+      #root {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        overflow: hidden;
+      }
+    </style>
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem("glasstab:settings");
+          var theme = "system";
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            var stored = parsed && parsed.state && parsed.state.settings;
+            if (stored && stored.theme) theme = stored.theme;
+          }
+          var prefersDark =
+            window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var dark = theme === "dark" || (theme === "system" && prefersDark);
+          var root = document.documentElement;
+          root.classList.toggle("dark", dark);
+          root.style.setProperty("color-scheme", dark ? "dark" : "light");
+        } catch (error) {
+          /* a cold start with unreadable storage is not worth breaking the page for */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
